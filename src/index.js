@@ -24,9 +24,10 @@ const isMermaid = title => title === 'mermaid:';
  *
  * @param   {Object}  node
  * @param   {vFile}   vFile
+ * @param   {Object}  options
  * @return {Object}
  */
-function replaceUrlWithGraph(node, vFile) {
+function replaceUrlWithGraph(node, vFile, options) {
   const { title, url, position } = node;
   const { destinationDir } = vFile.data;
 
@@ -37,7 +38,7 @@ function replaceUrlWithGraph(node, vFile) {
 
   try {
     // eslint-disable-next-line no-param-reassign
-    node.url = renderFromFile(`${vFile.dirname}/${url}`, destinationDir);
+    node.url = renderFromFile(`${vFile.dirname}/${url}`, destinationDir, options);
 
     vFile.info('mermaid link replaced with link to graph', position, PLUGIN_NAME);
   } catch (error) {
@@ -111,7 +112,7 @@ function visitCodeBlock(ast, vFile, options = {}) {
     } else {
       let graphSvgFilename;
       try {
-        graphSvgFilename = render(value, destinationDir);
+        graphSvgFilename = render(value, destinationDir, options);
 
         vFile.info(`${lang} code block replaced with graph`, position, PLUGIN_NAME);
       } catch (error) {
@@ -147,7 +148,7 @@ function visitLink(ast, vFile, options = {}) {
     return visit(ast, 'link', (node, index, parent) => replaceLinkWithEmbedded(node, index, parent, vFile));
   }
 
-  return visit(ast, 'link', node => replaceUrlWithGraph(node, vFile));
+  return visit(ast, 'link', node => replaceUrlWithGraph(node, vFile, options));
 }
 
 /**

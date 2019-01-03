@@ -23,7 +23,7 @@ function toCliArgs(options = {}) {
   const merged = { ...DEFAULT_OPTIONS, ...options };
   const args = Object.keys(merged).reduce((result, key) => {
     if (OPTION_MAP[key]) {
-      return `${result} ${OPTION_MAP[key]} ${merged[key]}`;
+      return `${result} -${OPTION_MAP[key]} ${merged[key]}`;
     }
     return result;
   }, '');

@@ -1,6 +1,6 @@
 {
   "name": "one-remark-mermaid",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A remark plugin for Markdown that replaces `mermaid` graphs with rendered SVGs.",
   "license": "MIT",
   "keywords": [
@@ -23,7 +23,7 @@
     "eslint-config-airbnb-base": "^11.1.0",
     "eslint-plugin-import": "^2.0.0",
     "jest": "^21.2.1",
-    "mermaid.cli": "^0.3.1",
+    "one-mermaid.cli": "^0.6.0",
     "remark-parse": "^4.0.0",
     "remark-stringify": "^4.0.0",
     "to-vfile": "^2.1.2",

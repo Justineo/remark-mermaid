@@ -6,15 +6,40 @@ const execSync = require('child_process').execSync;
 
 const PLUGIN_NAME = 'remark-mermaid';
 
+const OPTION_MAP = {
+  theme: 't',
+  width: 'w',
+  height: 'H',
+  backgroundColor: 'b',
+  cssFile: 'C',
+  puppeteerConfigFile: 'p',
+};
+
+const DEFAULT_OPTIONS = {
+  backgroundColor: 'transparent',
+};
+
+function toCliArgs(options = {}) {
+  const merged = { ...DEFAULT_OPTIONS, ...options };
+  const args = Object.keys(merged).reduce((result, key) => {
+    if (OPTION_MAP[key]) {
+      return `${result} ${OPTION_MAP[key]} ${merged[key]}`;
+    }
+    return result;
+  }, '');
+  return args ? ` ${args}` : '';
+}
+
 /**
  * Accepts the `source` of the graph as a string, and render an SVG using
  * mermaid.cli. Returns the path to the rendered SVG.
  *
  * @param  {string} source
  * @param  {string} destination
+ * @param  {Object} options
  * @return {string}
  */
-function render(source, destination) {
+function render(source, destination, options) {
   const unique = crypto.createHmac('sha1', PLUGIN_NAME).update(source).digest('hex');
   const mmdcExecutable = which.sync('mmdc');
   const mmdPath = path.join(destination, `${unique}.mmd`);
@@ -25,7 +50,7 @@ function render(source, destination) {
   fs.outputFileSync(mmdPath, source);
 
   // Invoke mermaid.cli
-  execSync(`${mmdcExecutable} -i ${mmdPath} -o ${svgPath} -b transparent`);
+  execSync(`${mmdcExecutable} -i ${mmdPath} -o ${svgPath}${toCliArgs(options)}`);
 
   // Clean up temporary file
   fs.removeSync(mmdPath);
@@ -39,16 +64,17 @@ function render(source, destination) {
  *
  * @param  {string} destination
  * @param  {string} source
+ * @param  {Object} options
  * @return {string}
  */
-function renderFromFile(inputFile, destination) {
+function renderFromFile(inputFile, destination, options) {
   const unique = crypto.createHmac('sha1', PLUGIN_NAME).update(inputFile).digest('hex');
   const mmdcExecutable = which.sync('mmdc');
   const svgFilename = `${unique}.svg`;
   const svgPath = path.join(destination, svgFilename);
 
   // Invoke mermaid.cli
-  execSync(`${mmdcExecutable} -i ${inputFile} -o ${svgPath} -b transparent`);
+  execSync(`${mmdcExecutable} -i ${inputFile} -o ${svgPath}${toCliArgs(options)}`);
 
   return `./${svgFilename}`;
 }
@@ -73,7 +99,7 @@ function getDestinationDir(vFile) {
  * Given the contents, returns a MDAST representation of a HTML node.
  *
  * @param  {string} contents
- * @return {object}
+ * @return {Object}
  */
 function createMermaidDiv(contents) {
   return {

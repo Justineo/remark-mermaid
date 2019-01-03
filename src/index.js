@@ -22,9 +22,9 @@ const isMermaid = title => title === 'mermaid:';
  * the link, generate a graph and then replace the link with the link to the
  * generated graph. Checks to ensure node has a title of `mermaid:` before doing.
  *
- * @param   {object}  node
+ * @param   {Object}  node
  * @param   {vFile}   vFile
- * @return {object}
+ * @return {Object}
  */
 function replaceUrlWithGraph(node, vFile) {
   const { title, url, position } = node;
@@ -51,11 +51,11 @@ function replaceUrlWithGraph(node, vFile) {
  * Given a link to a mermaid diagram, grab the contents from the link and put it
  * into a div that Mermaid JS can act upon.
  *
- * @param  {object}   node
+ * @param  {Object}   node
  * @param  {integer}  index
- * @param  {object}   parent
+ * @param  {Object}   parent
  * @param  {vFile}    vFile
- * @return {object}
+ * @return {Object}
  */
 function replaceLinkWithEmbedded(node, index, parent, vFile) {
   const { title, url, position } = node;
@@ -85,12 +85,12 @@ function replaceLinkWithEmbedded(node, index, parent, vFile) {
  * `mermaid` and pass that to mermaid.cli to render the image. Replaces the
  * codeblocks with an image of the rendered graph.
  *
- * @param {object}  ast
+ * @param {Object}  ast
  * @param {vFile}   vFile
- * @param {boolean} isSimple
+ * @param {Object}  options
  * @return {function}
  */
-function visitCodeBlock(ast, vFile, isSimple) {
+function visitCodeBlock(ast, vFile, options = {}) {
   return visit(ast, 'code', (node, index, parent) => {
     const { lang, value, position } = node;
     const destinationDir = getDestinationDir(vFile);
@@ -102,7 +102,7 @@ function visitCodeBlock(ast, vFile, isSimple) {
     }
 
     // Are we just transforming to a <div>, or replacing with an image?
-    if (isSimple) {
+    if (options.simple) {
       newNode = createMermaidDiv(value);
 
       vFile.info(`${lang} code block replaced with div`, position, PLUGIN_NAME);
@@ -134,16 +134,16 @@ function visitCodeBlock(ast, vFile, isSimple) {
 
 /**
  * If links have a title attribute called `mermaid:`, follow the link and
- * depending on `isSimple`, either generate and link to the graph, or simply
+ * depending on `options.simple`, either generate and link to the graph, or simply
  * wrap the graph contents in a div.
  *
- * @param {object}  ast
+ * @param {Object}  ast
  * @param {vFile}   vFile
- * @param {boolean} isSimple
+ * @param {Object}  options
  * @return {function}
  */
-function visitLink(ast, vFile, isSimple) {
-  if (isSimple) {
+function visitLink(ast, vFile, options = {}) {
+  if (options.simple) {
     return visit(ast, 'link', (node, index, parent) => replaceLinkWithEmbedded(node, index, parent, vFile));
   }
 
@@ -152,16 +152,16 @@ function visitLink(ast, vFile, isSimple) {
 
 /**
  * If images have a title attribute called `mermaid:`, follow the link and
- * depending on `isSimple`, either generate and link to the graph, or simply
+ * depending on `options.simple`, either generate and link to the graph, or simply
  * wrap the graph contents in a div.
  *
- * @param {object}  ast
+ * @param {Object}  ast
  * @param {vFile}   vFile
- * @param {boolean} isSimple
+ * @param {Object}  simple
  * @return {function}
  */
-function visitImage(ast, vFile, isSimple) {
-  if (isSimple) {
+function visitImage(ast, vFile, options = {}) {
+  if (options.simple) {
     return visit(ast, 'image', (node, index, parent) => replaceLinkWithEmbedded(node, index, parent, vFile));
   }
 
@@ -178,22 +178,20 @@ function visitImage(ast, vFile, isSimple) {
  * @link https://github.com/syntax-tree/mdast
  * @link https://github.com/vfile/vfile
  *
- * @param {object} options
+ * @param {Object} options
  * @return {function}
  */
 function mermaid(options = {}) {
-  const simpleMode = options.simple || false;
-
   /**
-   * @param {object} ast MDAST
+   * @param {Object} ast MDAST
    * @param {vFile} vFile
    * @param {function} next
-   * @return {object}
+   * @return {Object}
    */
   return function transformer(ast, vFile, next) {
-    visitCodeBlock(ast, vFile, simpleMode);
-    visitLink(ast, vFile, simpleMode);
-    visitImage(ast, vFile, simpleMode);
+    visitCodeBlock(ast, vFile, options);
+    visitLink(ast, vFile, options);
+    visitImage(ast, vFile, options);
 
     if (typeof next === 'function') {
       return next(null, ast, vFile);
